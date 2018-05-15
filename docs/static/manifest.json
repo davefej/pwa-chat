@@ -1,7 +1,7 @@
 {
   "name": "PWA CHAT",
   "short_name": "pwa-chat",
-  "start_url": ".",
+  "start_url": "../",
   "display": "standalone",
   "background_color": "#4285f4",
   "description": "A Progressive Chat App",
