@@ -1,0 +1,38 @@
+<!DOCTYPE html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><link rel=manifest href=static/manifest.json><link rel="shortcut icon" type=image/png href=static/img/favicon.ico><title>pwa-chat</title><link rel=stylesheet href=static/css/font-awesome.min.css><link href=static/css/bootstrap.min.css rel=stylesheet><link href=static/css/mdb.min.css rel=stylesheet><link href=static/css/style.css rel=stylesheet><link href=/static/css/app.232bb4e8713e459dac15b989464f9a0f.css rel=stylesheet></head><body><div id=app></div><script type=text/javascript src=static/js/jquery-3.2.1.min.js></script><script type=text/javascript src=static/js/popper.min.js></script><script type=text/javascript src=static/js/bootstrap.min.js></script><script type=text/javascript src=static/js/mdb.min.js></script><script type=text/javascript src=/static/js/manifest.2ae2e69a05c33dfc65f8.js></script><script type=text/javascript src=/static/js/vendor.1748317793fd05195ff8.js></script><script type=text/javascript src=/static/js/app.0eebadb8ee0f2a3b9ec2.js></script></body><script>if ('serviceWorker' in navigator) {
+
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('sw.js').then(function(registration) {
+        // Registration was successful
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+      }, function(err) {
+        // registration failed :(
+        console.log('ServiceWorker registration failed: ', err);
+      });
+    });
+  }
+
+  let deferredPrompt;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    e.preventDefault();
+    // Stash the event so it can be triggered later.
+    deferredPrompt = e;
+    if(prompt("Install on homesceen??")){
+      homescreen();
+    }
+  });
+
+  function homescreen(){
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    deferredPrompt.userChoice
+      .then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the A2HS prompt');
+        } else {
+          console.log('User dismissed the A2HS prompt');
+        }
+        deferredPrompt = null;
+      });
+  }</script></html>
