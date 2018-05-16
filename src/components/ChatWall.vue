@@ -10,7 +10,9 @@
   </div>
 
   <div class="message-input-container">
-     <div class="msg-input scrollbar scrollbar-primary" contenteditable="true" placeholder="Enter text here..."></div>
+     <div class="msg-input scrollbar scrollbar-primary" contenteditable="true" ref="txtinput" v-on:keyup="txtTyped" placeholder="Enter text here...">
+
+     </div>
     <div class="msg-icons"></div>
   </div>
 </div>
@@ -18,31 +20,43 @@
 
 <script>
     import Message from "./Message";
+    import HttpService from "../services/HttpService"
+    var service = HttpService.instance();
     export default {
         name: "ChatWall",
       components: {Message},
       data:function(){
-          return {
-            user:"Tibike1",
-            messages:[
-              {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:1,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-              {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-              {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"}
-            ].reverse()
+         return {
+           messages:[],
+           user:""
+         };
+      },
+      methods:{
+        showMessages(userId){
+          let data = service.getMessages(userId);
+          if(!data){
+            return;
           }
+          this.user = data.user;
+          this.messages = data.messages;
+        },
+        txtTyped(event){
+          if(event.keyCode == 13 && event.key == "Enter"){
+            if(event.shiftKey){
+              return;
+            }
+            var txt = this.$refs.txtinput.textContent;
+            this.$refs.txtinput.textContent = "";
+            if(txt.trim() === ""){
+              return;
+            }
+            this.messages.push({
+              receive:0,
+              time:new Date().toISOString(),
+              txt:txt
+            })
+          }
+        }
       }
     }
 </script>
@@ -102,7 +116,7 @@
   .scrollbar-primary::-webkit-scrollbar-thumb {
     border-radius: 10px;
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-    background-color: #4285F4;
+    background-color: #d3d3d3;
   }
 
 
@@ -117,7 +131,7 @@
 
 
   div[contenteditable=true] {
-
+    white-space: pre;
     width: 290px;
     padding: 5px;
   }

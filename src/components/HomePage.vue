@@ -1,10 +1,11 @@
 <template>
   <div class="home-container">
-    <div class="left-side scrollbar scrollbar-primary">
-      <users/>
+
+    <div id="userswall" class="left-side scrollbar scrollbar-primary">
+      <users @userSelected="updateChatWall"/>
     </div>
-    <div class="right-side">
-      <chat-wall/>
+    <div id="chatwall" class="right-side">
+      <chat-wall ref="cw" />
     </div>
   </div>
 </template>
@@ -13,7 +14,31 @@
   import Users from "./Users";
   import ChatWall from "./ChatWall";
   export default {
-    components: {ChatWall, Users}
+    components: {ChatWall, Users},
+    props:["back"],
+    methods:{
+      updateChatWall(userId){
+        this.$refs.cw.showMessages(userId);
+        if (window.matchMedia('screen and (max-width: 728px)').matches) {
+          this.mobileShowChat();
+        }
+      },
+      mobileShowChat(){
+        $("#userswall").hide();
+        $("#chatwall").hide().show("slide", { direction: "right" }, 500);
+        this.$emit('showBack');
+      },
+      mobileShowUsers(){
+        $("#chatwall").hide();
+        $("#userswall").show("slide", { direction: "left" }, 500);
+        this.$emit('hideBack');
+      },
+      backClicked(){
+        this.mobileShowUsers();
+      }
+
+    }
+
   }
 </script>
 
@@ -64,7 +89,7 @@
 .scrollbar-primary::-webkit-scrollbar-thumb {
   border-radius: 10px;
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
-  background-color: #4285F4;
+  background-color: #d3d3d3;
 }
 
 

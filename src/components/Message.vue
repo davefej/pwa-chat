@@ -1,11 +1,7 @@
 <template>
 <div class="message-item-conatainer">
-  <div v-if="message.receive" class="message-item incoming-message-item ">
-    {{message.txt}}
-  </div>
-  <div v-if="!message.receive" class="message-item outgoing-message-item">
-    {{message.txt}}
-  </div>
+  <div v-if="message.receive" class="message-item incoming-message-item ">{{message.txt}}</div>
+  <div v-if="!message.receive" class="message-item outgoing-message-item">{{message.txt}}</div>
 </div>
 </template>
 
@@ -30,11 +26,12 @@
   float: left;
   background-color: #607fda;
   color:white;
+  text-align: left;
 }
 
   .outgoing-message-item{
     float: right;
-
+    text-align: right;
     background-color: #f1f1f1;
   }
 
@@ -43,5 +40,6 @@
     border-radius: 1em;
     max-width: 47%;
     word-wrap: break-word;
+    white-space: pre-wrap;
   }
 </style>
