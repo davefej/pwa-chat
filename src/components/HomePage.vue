@@ -1,4 +1,13 @@
 <template>
+<div class="onepage">
+  <nav class="navbar navbar-expand-lg navbar-dark primary-color">
+
+    <!-- Navbar brand -->
+    <div class="back-img" v-if="back" @click="backClicked" >&nbsp;</div>
+
+    <a class="navbar-brand" href="#">PWA - CHAT</a>
+  </nav>
+
   <div class="home-container">
 
     <div id="userswall" class="left-side scrollbar scrollbar-primary">
@@ -8,36 +17,69 @@
       <chat-wall ref="cw" />
     </div>
   </div>
+</div>
 </template>
 
 <script>
   import Users from "./Users";
   import ChatWall from "./ChatWall";
+  import HttpService from "../services/HttpService"
+  let service = HttpService.instance();
+
+
   export default {
     components: {ChatWall, Users},
-    props:["back"],
+    data:function(){
+      return {
+        back: false,
+        currentUserId:false
+      };
+    },
     methods:{
       updateChatWall(userId){
+        this.currentUserId = userId;
         this.$refs.cw.showMessages(userId);
         if (window.matchMedia('screen and (max-width: 728px)').matches) {
           this.mobileShowChat();
+        }else{
+          this.backVisible(false);
+          if(!$("#chatwall").is(":visible")){
+            $("#chatwall").show()
+          }
         }
       },
       mobileShowChat(){
         $("#userswall").hide();
         $("#chatwall").hide().show("slide", { direction: "right" }, 500);
-        this.$emit('showBack');
+        this.backVisible(true);
       },
       mobileShowUsers(){
         $("#chatwall").hide();
         $("#userswall").show("slide", { direction: "left" }, 500);
-        this.$emit('hideBack');
+        this.backVisible(false)
       },
       backClicked(){
         this.mobileShowUsers();
+      },
+      backVisible(bool){
+        this.back = bool
+      },
+      msgArrived:function(msg){
+        if(msg.sender == this.currentUserId){
+          msg.receive = 1;
+          this.$refs.cw.msgArrived(msg);
+        }
       }
 
-    }
+    },
+    created:function(){
+      if(!service.loggedIn()){
+        this.$router.push("login");
+      }
+      service.subscribe(this.msgArrived);
+    },
+
+
 
   }
 </script>
@@ -90,6 +132,19 @@
   border-radius: 10px;
   -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
   background-color: #d3d3d3;
+}
+
+  .onepage{
+    height: 100%;
+    width: 100%;
+    background: white;
+  }
+
+.back-img{
+  background-image: url("../assets/left-arrow.png");
+  background-size: contain;
+  width: 30px;
+  height:30px;
 }
 
 

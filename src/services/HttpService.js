@@ -1,87 +1,188 @@
-export default class HttpService{
+export default class HttpService {
 
-  constructor(param){
+  constructor(param) {
     this.instance = null;
-    if(!param){
+    if (!param) {
       throw Error("Illegal Constructor call!");
     }
-
     this.data = {};
-    this.data.users = [
-      {id: 1, name: "Tibike"},
-      {id: 2, name: "Robika"},
-      {id: 3, name: "Tiborka"},
-      {id: 4, name: "Imike"}
-    ];
-
-    this.data.messages = {
-      "1":{
-        user:"Tibike",
-        messages:[
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:1,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", time:"2018.05.14 10:00:00"}
-        ].reverse()
-      },
-      "2":{
-        user:"Robika",
-        messages:[
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"}
-        ]
-      },
-      "3":{
-        user:"Imike",
-        messages:[
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"}
-        ]
-      },
-      "4":{
-        user:"Tibike2",
-        messages:[
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:1,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"},
-          {receive:0,txt:"Lorem ipsum dolor sit amet", time:"2018.05.14 10:00:00"}
-          ]
-      }
-    }
+    this.data.users = [];
+    this.newMessages = [];
+    this.msgArrivedCallback = null;
   }
 
-  getUsers(){
+  getUsers() {
     return this.data.users;
   }
 
   getMessages(userId) {
-    if(this.data.messages[userId]){
+    if (this.data.messages[userId]) {
       return this.data.messages[userId];
-    }else{
+    } else {
       return {
-        user:"",
-        messages:[]
+        user: "",
+        messages: []
       }
     }
+  }
+
+  bindMessages(toUserId, data) {
+    let service = this;
+    $.get({
+      dataType: "json",
+      url: "messages/" + this.msgid(toUserId, this.userId),
+      success: function (res) {
+        if (!res.ok) {
+          return;
+        }
+        for (var i = 0; i < res.messages.length; i++) {
+          res.messages[i].receive = res.messages[i].sender != service.userId;
+          data.push(res.messages[i]);
+        }
+      },
+      error: function () {
+
+      }
+    });
+  }
+
+  sendMessage(toUserId, txt) {
+    $.post({
+      dataType: "json",
+      url: "messages/" + this.msgid(toUserId, this.userId),
+      contentType: 'application/json; charset=utf-8',
+      data: JSON.stringify({
+        msg: {
+          txt: txt,
+          sender: this.userId
+        }
+      }),
+      success: function () {
+
+      }
+    });
+  }
+
+  msgid(id1, id2) {
+    if (id1 < id2) {
+      return id1 + "_" + id2;
+    } else {
+      return id2 + "_" + id1;
+    }
+  }
+
+  bindUsers(data) {
+    var service = this;
+    $.get({
+      dataType: "json",
+      url: "users",
+      success: function (res) {
+        service.users = res;
+        for (var key in res) {
+          data.push({
+            id: key,
+            name: res[key].user
+          });
+        }
+      }
+    });
+  }
+
+  logIn(user, pass, success) {
+    var service = this;
+    $.post({
+      dataType: "json",
+      url: "auth/login",
+      data: {
+        user: user,
+        pass: pass
+      },
+      success: function (res) {
+        service.userId = res.id;
+        service.logged = true;
+        success();
+        service.pollActive = true;
+        service.pollServer();
+      }
+    });
+    this.logged = true;
+  }
+
+  signUp(user, pass, success) {
+    var service = this;
+    $.post({
+      dataType: "json",
+      url: "auth/register",
+      data: {
+        user: user,
+        pass: pass
+      },
+      success: function () {
+        service.logged = true;
+        success();
+      }
+    });
 
   }
 
-
-  sendMessage(userId,txt){
-
+  logOut() {
+    this.logged = false;
   }
 
-  static instance(){
-    if(!HttpService.inst){
+  loggedIn() {
+    if (typeof dev != "undefined" && dev) {
+      return true;
+    }
+    return this.logged;
+  }
+
+  static instance() {
+    if (!HttpService.inst) {
       HttpService.inst = new HttpService(true);
     }
     return HttpService.inst;
   }
+
+  getUserNameById(id) {
+    if (this.users && this.users[id]) {
+      return this.users[id].user;
+    }
+  }
+
+  pollServer() {
+    var service = this;
+    if (this.pollActive) {
+      window.setTimeout(function () {
+        $.ajax({
+          url: "messages/polling/" + service.userId,
+          method:"GET",
+          success: function (result) {
+            if(result && result.sender && result.txt){
+              if(result.sender != service.userId){
+                service.messageArrived(result);
+              }
+            }
+            //SUCCESS LOGIC
+            service.pollServer();
+          },
+          error: function () {
+            //ERROR HANDLING
+            service.pollServer();
+          }
+        });
+      }, 10);
+    }
+  }
+
+  messageArrived(msg){
+    if(this.msgArrivedCallback){
+      this.msgArrivedCallback(msg);
+    }
+  }
+  subscribe(cb){
+    this.msgArrivedCallback = cb;
+  }
 }
+
+//var dev = true;
 

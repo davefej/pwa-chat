@@ -1,5 +1,5 @@
 <template>
-  <div class="contact-container waves-effect">
+  <div class="contact-container waves-effect  ">
     <img class="contact-image" src="../assets/user.png"/>
     <div class="contact-details">
       <div class="contact-name">{{name}}</div>

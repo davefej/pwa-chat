@@ -20,8 +20,11 @@
     data: function () {
       return {
         searchFilter:"",
-        users:service.getUsers()
+        users:[]//service.getUsers()
       }
+    },
+    mounted:function(){
+      service.bindUsers(this.users);
     },
     methods: {
         userSelected(id){
