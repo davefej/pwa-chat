@@ -47,6 +47,7 @@ export default class HttpService {
   }
 
   sendMessage(toUserId, txt) {
+    let service = this;
     $.post({
       dataType: "json",
       url: "messages/" + this.msgid(toUserId, this.userId),
@@ -61,14 +62,13 @@ export default class HttpService {
 
       },
       error:function(){
-        if(!localStorage.unsent){
+        if(!localStorage.unsent || typeof localStorage.unsent != "object"){
           localStorage.unsent = [];
-
         }
         localStorage.unsent.push({
-          msgId:this.msgid(toUserId, this.userId),
+          msgId:service.msgid(toUserId, service.userId),
           txt:txt,
-          sender:this.userId
+          sender:service.userId
         });
         navigator.serviceWorker.ready.then(function(swRegistration) {
           return swRegistration.sync.register('syncMessages');
