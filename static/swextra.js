@@ -1,3 +1,10 @@
+var unsentmessages = [];
+self.onmessage = function (msg) {
+  if(msg.type = "unsentmessage"){
+    unsentmessages.push(msg.data)
+  }
+}
+
 self.addEventListener('sync', function(event) {
   if (event.tag == 'syncMessages') {
     event.waitUntil(syncMessages());
@@ -5,10 +12,10 @@ self.addEventListener('sync', function(event) {
 });
 
 function syncMessages(){
-
-  while((item =  localStorage.unsent.pop()) != null){
+  while((item =  unsentmessages.pop()) != null){
     syncMessage(item);
   }
+  localStorage.unsent = "[]";
 }
 
 function syncMessage(msg){

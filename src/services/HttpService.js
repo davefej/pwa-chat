@@ -62,13 +62,13 @@ export default class HttpService {
 
       },
       error:function(){
-        if(!localStorage.unsent || typeof localStorage.unsent != "object"){
-          localStorage.unsent = [];
-        }
-        localStorage.unsent.push({
-          msgId:service.msgid(toUserId, service.userId),
-          txt:txt,
-          sender:service.userId
+        navigator.serviceWorker.controller.postMessage({
+          type:"unsentmessage",
+          data:{
+            msgId:service.msgid(toUserId, service.userId),
+            txt:txt,
+            sender:service.userId
+          }
         });
         navigator.serviceWorker.ready.then(function(swRegistration) {
           return swRegistration.sync.register('syncMessages');
