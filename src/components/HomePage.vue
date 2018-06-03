@@ -5,7 +5,9 @@
     <!-- Navbar brand -->
     <div class="back-img" v-if="back" @click="backClicked" >&nbsp;</div>
 
+
     <a class="navbar-brand" href="#">PWA - CHAT</a>
+    <a class="nav-item whitecolor" href="#">{{userName}}</a>
   </nav>
 
   <div class="home-container">
@@ -28,11 +30,14 @@
 
 
   export default {
+
+
     components: {ChatWall, Users},
     data:function(){
       return {
         back: false,
-        currentUserId:false
+        currentUserId:false,
+        userName:""
       };
     },
     methods:{
@@ -76,6 +81,7 @@
       if(!service.loggedIn()){
         this.$router.push("login");
       }
+      this.userName = service.getUserName();
       service.subscribe(this.msgArrived);
     },
 
@@ -138,6 +144,10 @@
     height: 100%;
     width: 100%;
     background: white;
+  }
+
+  .whitecolor{
+    color:white;
   }
 
 .back-img{

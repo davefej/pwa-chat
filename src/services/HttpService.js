@@ -59,6 +59,20 @@ export default class HttpService {
       }),
       success: function () {
 
+      },
+      error:function(){
+        if(!localStorage.unsent){
+          localStorage.unsent = [];
+
+        }
+        localStorage.unsent.push({
+          msgId:this.msgid(toUserId, this.userId),
+          txt:txt,
+          sender:this.userId
+        });
+        navigator.serviceWorker.ready.then(function(swRegistration) {
+          return swRegistration.sync.register('syncMessages');
+        });
       }
     });
   }
@@ -90,6 +104,7 @@ export default class HttpService {
 
   logIn(user, pass, success) {
     var service = this;
+    this.userName = user;
     $.post({
       dataType: "json",
       url: "auth/login",
@@ -103,12 +118,16 @@ export default class HttpService {
         success();
         service.pollActive = true;
         service.pollServer();
+      },
+      error:function(){
+        service.userName = null;
       }
     });
     this.logged = true;
   }
 
   signUp(user, pass, success) {
+    this.userName = user;
     var service = this;
     $.post({
       dataType: "json",
@@ -120,6 +139,8 @@ export default class HttpService {
       success: function () {
         service.logged = true;
         success();
+      },error:function(){
+        service.userName = null;
       }
     });
 
@@ -181,6 +202,10 @@ export default class HttpService {
   }
   subscribe(cb){
     this.msgArrivedCallback = cb;
+  }
+
+  getUserName(){
+      return this.userName || "";
   }
 }
 
