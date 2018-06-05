@@ -1,5 +1,5 @@
 <template>
-  <div class="contact-container waves-effect  ">
+  <div class="contact-container waves-effect  " v-bind:class="{ currentUser: (currentUserId == id) }">
     <img class="contact-image" src="../assets/user.png"/>
     <div class="contact-details">
       <div class="contact-name">{{name}}</div>
@@ -9,10 +9,16 @@
 </template>
 
 <script>
+  import HttpService from "../services/HttpService"
+  let service = HttpService.instance();
     export default {
         name: "Contact",
-        props: ['name','id']
-
+        props: ['name','id'],
+        data:function(){
+          return {
+            currentUserId:service.userId
+          }
+        }
     }
 </script>
 
@@ -37,8 +43,12 @@
 
 }
 
-  .contact-name{
+.currentUser{
+  background:#dde9ff;
+}
+
+.contact-name{
     font-size: 1.2em;
     font-weight: bold;
-  }
+}
 </style>

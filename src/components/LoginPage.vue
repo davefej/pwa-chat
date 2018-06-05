@@ -83,12 +83,14 @@
   let service = HttpService.instance();
     export default {
       name: "Login",
-      data:{
-        loginUser:"",
-        loginPass:"",
-        signupUser:"",
-        signupPass:"",
-        signupPassAgain:""
+      data:function(){
+        return {
+          loginUser:"",
+          loginPass:"",
+          signupUser:"",
+          signupPass:"",
+          signupPassAgain:""
+        }
       },
       methods:{
         login(){

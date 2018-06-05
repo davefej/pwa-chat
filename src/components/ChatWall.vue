@@ -15,7 +15,6 @@
     <div class="message-input-container">
       <div class="msg-input scrollbar scrollbar-primary" contenteditable="true" ref="txtinput" v-on:keyup="txtTyped"
            placeholder="Enter text here...">
-
       </div>
       <div class="msg-icons"></div>
     </div>
@@ -43,6 +42,7 @@
         this.messages = [];
         this.user = service.getUserNameById(userId);
         service.bindMessages(userId, this.messages);
+        this.scrolldown();
       },
       txtTyped(event) {
         if (event.keyCode == 13 && event.key == "Enter") {
@@ -72,7 +72,9 @@
         setTimeout(
           function(){
             var objDiv = document.getElementById("messages-container");
-            objDiv.scrollTop = objDiv.scrollHeight;
+            if(objDiv){
+              objDiv.scrollTop = objDiv.scrollHeight;
+            }
           },200);
         }
       },
@@ -95,7 +97,7 @@
   }
 
   .message-input-container {
-    width: 100%;
+    width: 99%;
     border-top: 1px solid #cecece;
     flex-direction: row;
     display: flex;
@@ -108,6 +110,7 @@
     min-height: 3.6em;
     text-align: left;
     padding: 0.2em;
+
   }
 
   .msg-icons {
