@@ -1,12 +1,22 @@
 <template>
+
+
+
 <div class="login-container">
   <!-- Default form login -->
+
+  <div class="autologin-container">
+    <img clsas="autologinicon" src="static/img/icon192.png">
+    <div class="autologin-loading"></div>
+    <div id="autologintext" class="autologin-text">Adatok betöltése!</div>
+  </div>
+
   <div  id="login" class="card mx-xl-5">
     <div class="card-body">
 
       <!--Header-->
       <div class="form-header login-label rounded">
-        <h3>Login:</h3>
+        <h3>Login</h3>
       </div>
 
       <!-- Default input email -->
@@ -20,7 +30,7 @@
       <input type="password" id="loginPass" v-model="loginPass" class="form-control">
 
       <div class="text-center mt-4">
-        <button class="btn btn-primary waves-effect waves-light"  @click="login">Login</button>
+        <button class="btn btn-primary waves-effect waves-light"  id="loginbtn"  @click="login">Login</button>
       </div>
 
     </div>
@@ -40,7 +50,7 @@
 
       <!--Header-->
       <div class="form-header login-label rounded">
-        <h3>Sign Up:</h3>
+        <h3>Sign Up</h3>
       </div>
 
       <!-- Default input email -->
@@ -61,7 +71,7 @@
 
 
       <div class="text-center mt-4">
-        <button class="btn btn-primary waves-effect waves-light"  @click="signup">Login</button>
+        <button class="btn btn-primary waves-effect waves-light" @click="signup">Login</button>
       </div>
 
     </div>
@@ -92,6 +102,28 @@
           signupPassAgain:""
         }
       },
+      mounted:function(){
+        setTimeout(function(){
+          $("#autologintext").html("Mindjárt kész!");
+        },500);
+
+        if(!navigator.credentials){
+          console.log("credentails api not available");
+          //TODO update browser
+          $("#login").show();
+          return;
+        }
+
+        var back = this.back;
+        console.log("Login credentials");
+        navigator.credentials.get({password:true}).then(function(credential) {
+          console.log("Login credentials 2");
+          service.logIn(credential.id,credential.password,back,function(){
+            $(".autologin-container").hide();
+            $("#login").show();
+          });
+        });
+      },
       methods:{
         login(){
           service.logIn(this.loginUser,this.loginPass,this.back);
@@ -113,7 +145,7 @@
           }
         },
         back(){
-          this.$router.go(-1);
+          this.$router.push('/')
         }
       }
     }
@@ -143,12 +175,43 @@
     text-size-adjust: 100%;
   }
 
+  .autologin-text{
+    color:white;
+  }
+
   #signup{
     display: none;
+  }
+
+  #login{
+    display:none;
   }
 
 
   .switchLogin{
     cursor:pointer;
+  }
+
+.autologin-loading {
+  border: 4px solid #f3f3f3; /* Light grey */
+  border-top: 4px solid gray; /* Blue */
+  border-radius: 50%;
+  width: 3em;
+  height: 3em;
+  animation: spin 1s linear infinite;
+
+  margin: auto;
+  margin-top:1em;
+  margin-bottom: 1em;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+  .autologin-container{
+    margin:auto;
+    text-align: center;
   }
 </style>

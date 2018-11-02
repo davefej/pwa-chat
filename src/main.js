@@ -30,14 +30,23 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 
+window.DBVERSION = 10;
 if (!('indexedDB' in window)) {
   alert('This browser doesn\'t support IndexedDB');
 }else{
-  dbPromise = idb.open('db', 1,function(upgradeDb){
-    if (!upgradeDb.objectStoreNames.contains('unSyncedMessages')) {
-      upgradeDb.createObjectStore('unSyncedMessages');
+
+  var request = window.indexedDB.open("db",window.DBVERSION);
+  request.onupgradeneeded = function(event) {
+
+    var db = event.target.result;
+
+    if (!db.objectStoreNames.contains('unSyncedMessages')) {
+      db.createObjectStore('unSyncedMessages',{keyPath:"time"});
+    }else{
+      db.deleteObjectStore("unSyncedMessages");
+      db.createObjectStore('unSyncedMessages',{keyPath:"time"});
     }
-  });
+  }
 
 }
 

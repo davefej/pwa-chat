@@ -37,8 +37,10 @@ export default class HttpService {
           return;
         }
         for (var i = 0; i < res.messages.length; i++) {
-          res.messages[i].receive = res.messages[i].sender != service.userId;
-          data.push(res.messages[i]);
+          if(res.messages[i]){
+            res.messages[i].receive = res.messages[i].sender != service.userId;
+            data.push(res.messages[i]);
+          }
         }
       },
       error: function () {
@@ -64,6 +66,7 @@ export default class HttpService {
 
       },
       error:function(){
+      /*
         navigator.serviceWorker.controller.postMessage({
           type:"unsentmessage",
           data:{
@@ -72,19 +75,15 @@ export default class HttpService {
             sender:service.userId
           }
         });
-
-        dbPromise.then(function(db){
-          var tx = db.transaction('unSyncedMessages', 'readwrite');
-          var store = tx.objectStore('unSyncedMessages');
-          var item = {
+      */
+        service.saveToDb({
+          store:'unSyncedMessages',
+          data:{
             msgId:service.msgid(toUserId, service.userId),
             txt:txt,
-            sender:service.userId
-          };
-          store.add(item);
-          return tx.complete;
-        }).then(function() {
-          console.log('added item to the store os!');
+            sender:service.userId,
+            time: (new Date()).getTime()
+          }
         });
 
         navigator.serviceWorker.ready.then(function(swRegistration) {
@@ -132,7 +131,7 @@ export default class HttpService {
     });
   }
 
-  logIn(user, pass, success) {
+  logIn(user, pass, success,failure) {
     var service = this;
     this.userName = user;
 
@@ -154,8 +153,10 @@ export default class HttpService {
       service.logged = true;
       success();
       service.pollServer();
+      service.registerPush();
     }).catch(function(error){
       service.userName = null;
+      failure();
     });
   }
 
@@ -243,6 +244,63 @@ export default class HttpService {
   getUserName(){
       return this.userName || "";
   }
+
+  saveToDb(params){
+    var request = window.indexedDB.open("db",window.DBVERSION);
+    request.onsuccess = function(event){
+      var db = event.target.result;
+      var tx = db.transaction(params.store, 'readwrite');
+      var store = tx.objectStore(params.store);
+      var objectStoreRequest = store.add(params.data);
+
+      objectStoreRequest.onsuccess = function(event) {
+        debugger;
+        console.log("Sikeres!")
+      };
+
+      objectStoreRequest.onerror = function(e){
+        debugger;
+        console.log(e);
+      }
+    }
+  }
+  myLocation(locationCallback){
+    if (navigator.geolocation) {
+       navigator.geolocation.getCurrentPosition(locationCallback);
+    }else{
+        locationCallback(false);
+    }
+
+  }
+  registerPush(){
+    var service = this;
+    var intervalId = setInterval(function(){
+      if(!window.registration){
+        return;
+      }
+
+      console.log("registerpush");
+      clearInterval(intervalId);
+      const publicVapidKey = 'BExzC1HY_R6awc0BBYNLsVtJyWitteGMLqhA-f563Fs4yUWEP2JBRy4HSCiWciB1tPRRg9nKHdtxyGInOKPwqFw';
+      window.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+      }).then(function(subscription){
+        fetch('push/'+service.userId, {
+          method: 'POST',
+          body: JSON.stringify(subscription),
+          headers: {
+            'content-type': 'application/json'
+          }
+        });
+      });
+
+
+    },1000);
+
+
+  }
+
 }
 
 //var dev = true;

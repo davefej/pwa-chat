@@ -30,16 +30,21 @@
     <script type="text/javascript" src="static/js/bootstrap.min.js"></script>
     <!-- MDB core JavaScript -->
     <script type="text/javascript" src="static/js/mdb.min.js"></script>
+    <script type="text/javascript" src="static/easyrtc/socket-io.js"></script>
+    <script type="text/javascript" src="static/easyrtc/easyrtc.js"></script>
+
   </body>
 
 <script>
 
-  if ('serviceWorker' in navigator) {
 
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
+
       navigator.serviceWorker.register('sw.js').then(function(registration) {
         // Registration was successful
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        window.registration = registration;
       }, function(err) {
         // registration failed :(
         console.log('ServiceWorker registration failed: ', err);
@@ -72,7 +77,29 @@
         deferredPrompt = null;
       });
   }
+  function initMap(){
+    window.mapsloaded = 1;
+  }
 
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
 
 </script>
+
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnxh_2ttAwFbfLkixCmO2kOZneuxEh9K4&callback=initMap"
+          type="text/javascript"></script>
+
 </html>

@@ -1,15 +1,6 @@
 <template>
 <div class="onepage">
-  <nav class="navbar navbar-expand-lg navbar-dark primary-color">
-
-    <!-- Navbar brand -->
-    <div class="back-img" v-if="back" @click="backClicked" >&nbsp;</div>
-
-
-    <a class="navbar-brand" href="#">PWA - CHAT</a>
-    <a class="nav-item whitecolor" href="#">{{userName}}</a>
-  </nav>
-
+  <navbar @back="backClicked" ref="navbar" />
   <div class="home-container">
 
     <div id="userswall" class="left-side scrollbar scrollbar-primary">
@@ -23,6 +14,7 @@
 </template>
 
 <script>
+  import Navbar from "./Navbar";
   import Users from "./Users";
   import ChatWall from "./ChatWall";
   import HttpService from "../services/HttpService"
@@ -30,14 +22,10 @@
 
 
   export default {
-
-
-    components: {ChatWall, Users},
+    components: {ChatWall, Users,Navbar},
     data:function(){
       return {
-        back: false,
-        currentUserId:false,
-        userName:""
+        currentUserId:false
       };
     },
     methods:{
@@ -67,23 +55,29 @@
         this.mobileShowUsers();
       },
       backVisible(bool){
-        this.back = bool
+        this.$refs.navbar.backVisible(bool);
       },
       msgArrived:function(msg){
         if(msg.sender == this.currentUserId){
           msg.receive = 1;
           this.$refs.cw.msgArrived(msg);
         }
+      },
+      nearby(){
+        this.$router.push("nearby");
       }
-
     },
     created:function(){
       if(!service.loggedIn()){
         this.$router.push("login");
       }
-      this.userName = service.getUserName();
+
       service.subscribe(this.msgArrived);
     },
+    mounted:function(){
+      this.$refs.navbar.setUser(service.getUserName());
+    }
+
 
 
 
@@ -146,16 +140,6 @@
     background: white;
   }
 
-  .whitecolor{
-    color:white;
-  }
-
-.back-img{
-  background-image: url("../assets/left-arrow.png");
-  background-size: contain;
-  width: 30px;
-  height:30px;
-}
 
 
 </style>
