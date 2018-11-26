@@ -16,6 +16,8 @@
     <!-- Your custom styles (optional) -->
     <link href="static/css/style.css" rel="stylesheet">
 
+    <link href="static/emoji/jquery.lsxemojipicker.css" rel="stylesheet">
+
   </head>
   <body>
     <div id="app"></div>
@@ -36,6 +38,12 @@
 
     <script type="text/javascript" src="static/js/md5.js"></script>
     <script type="text/javascript" src="static/js/sha256.min.js"></script>
+
+    <script src="https://twemoji.maxcdn.com/2/twemoji.min.js"></script>
+    <script src="static/emoji/jquery.lsxemojipicker.js"></script>
+
+
+
   </body>
 
 <script>
@@ -62,7 +70,7 @@
     e.preventDefault();
     // Stash the event so it can be triggered later.
     deferredPrompt = e;
-    if(alert("Add to homesceen?")){
+    if(prompt("Add to homesceen?")){
       homescreen();
     }
   });

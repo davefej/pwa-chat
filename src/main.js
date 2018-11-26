@@ -4,6 +4,8 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 
+
+
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
@@ -13,6 +15,7 @@ var app = new Vue({
   components: { App },
   template: '<App/>'
 })
+
 
 import HttpService from "./services/HttpService"
 var service = HttpService.instance();

@@ -9,6 +9,8 @@ export default class HttpService {
     this.data.users = [];
     this.newMessages = [];
     this.msgArrivedCallback = null;
+    this.locationStr = null;
+    this.updateLocation();
   }
 
   getUsers() {
@@ -82,7 +84,8 @@ export default class HttpService {
       data: JSON.stringify({
         msg: {
           txt: txt,
-          sender: this.userId
+          sender: this.userId,
+          location:service.locationName()
         }
       }),
       success: function () {
@@ -184,6 +187,7 @@ export default class HttpService {
       success();
       service.pollServer();
       service.registerPush();
+      service.requestNotificationPermission();
       localStorage.setItem("salt", res.salt);
       localStorage.setItem("userid", res.id);
       localStorage.setItem("auth", md5(sha256.pbkdf2(pass, res.salt, 1000, 32)));
@@ -193,6 +197,7 @@ export default class HttpService {
           service.userId =localStorage.getItem("userid");
           service.logged = true;
           success();
+          service.requestNotificationPermission();
           service.pollServer();
           service.registerPush();
 
@@ -330,12 +335,12 @@ export default class HttpService {
       var objectStoreRequest = store.add(params.data);
 
       objectStoreRequest.onsuccess = function(event) {
-        debugger;
+
         console.log("Sikeres!")
       };
 
       objectStoreRequest.onerror = function(e){
-        debugger;
+
         console.error(e);
       }
     }
@@ -345,6 +350,38 @@ export default class HttpService {
        navigator.geolocation.getCurrentPosition(locationCallback);
     }else{
         locationCallback(false);
+    }
+
+  }
+  locationName(){
+     return this.locationStr;
+  }
+  updateLocation(){
+    var service = this;
+    if(!this.locationTimer && navigator.geolocation){
+      var updateLoc = function(){
+        service.myLocation(function(position){
+          var geocoder = new google.maps.Geocoder();
+          var geolocate = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+          geocoder.geocode({'latLng': geolocate}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+              var result;
+              if (results.length > 1) {
+                result = results[1];
+              } else {
+                result = results[0];
+              }
+              var locationStr = result.address_components[3].long_name+", "+result.address_components[2].long_name;;
+              console.log("Location updated!",locationStr);
+              service.locationStr = locationStr;
+            }
+          });
+        })};
+        this.locationTimer = setInterval(updateLoc,1000*60*10);//10 min
+      setTimeout(function(){
+        updateLoc();
+      },1000);
+
     }
 
   }
@@ -371,7 +408,13 @@ export default class HttpService {
       });
     },1000);
   }
-
+  requestNotificationPermission(){
+    if (Notification.permission != 'granted') {
+      Notification.requestPermission(function(status) {
+        console.log('Notification permission status:', status);
+      });
+    }
+  }
   showMsgNotification(msg){
     var userName = this.getUserNameById(msg.sender);
     var msgShort = msg.txt.length > 20 ? msg.txt.substr(0,17)+"..." : msg.txt;

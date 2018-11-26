@@ -4,8 +4,8 @@
       {{user}}
     </div>
     <div id="messages-container" class="messages-container scrollbar scrollbar-primary">
-      <div v-if="user != null" v-for="message in messages">
-        <Message :message="message"/>
+      <div v-if="user != null" v-for="(message,index) in messages">
+        <Message :message="message" :last="index == (messages.length-1)"/>
       </div>
       <div v-if="user == null">
         <div class="emptychatwall">Válasszon Felhasználót</div>
@@ -13,10 +13,12 @@
     </div>
 
     <div class="message-input-container">
-      <div class="msg-input scrollbar scrollbar-primary" contenteditable="true" ref="txtinput" v-on:keyup="txtTyped"
+      <div id="msginput" class="msg-input scrollbar scrollbar-primary" contenteditable="true" ref="txtinput" v-on:keyup="txtTyped"
            placeholder="Enter text here...">
       </div>
-      <div class="msg-icons"></div>
+      <button class=" msg-icons emojipicker">
+        😄😚
+      </button>
     </div>
   </div>
 </template>
@@ -24,6 +26,7 @@
 <script>
   import Message from "./Message";
   import HttpService from "../services/HttpService"
+
 
   var service = HttpService.instance();
   export default {
@@ -75,13 +78,27 @@
             if(objDiv){
               objDiv.scrollTop = objDiv.scrollHeight;
             }
+
           },200);
         }
       },
      created: function () {
+
         this.scrolldown();
 
-     }
+     },
+    mounted:function(){
+      debugger;
+      var txtinput = this.$refs.txtinput;
+      $('.emojipicker').lsxEmojiPicker({
+        twemoji: true,
+        onSelect: function(emoji){
+          txtinput.textContent += String.fromCodePoint(emoji.value.replace("&#","0"));
+          console.log(emoji);
+        }
+      });
+    }
+
   }
 </script>
 
@@ -156,5 +173,14 @@
     margin-top: 2em;
     color: #4285f4;
     font-size: 2em;
+  }
+
+  .emojipicker{
+    background: transparent;
+    border: none;
+    width: 2em;
+
+    height: 3em;
+    cursor: pointer;
   }
 </style>

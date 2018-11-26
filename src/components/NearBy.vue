@@ -30,7 +30,6 @@
         methods: {
           locationCB(position) {
             if(position){
-
               var cords = {lat: position.coords.latitude, lng:  position.coords.longitude};
               var map;
               map = new google.maps.Map(document.getElementById('map'), {

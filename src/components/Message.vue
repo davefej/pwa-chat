@@ -1,6 +1,7 @@
 <template>
 <div class="message-item-conatainer">
-  <div v-if="message.receive" class="message-item incoming-message-item ">{{message.txt}}</div>
+  <div v-if="message.receive" class="message-item incoming-message-item ">
+    <div class="incoming-msg">{{message.txt}}</div><div v-if="message.location" class="message-receive-location">{{message.location}}</div></div>
   <div v-if="!message.receive" class="message-item outgoing-message-item">{{message.txt}}</div>
 </div>
 </template>
@@ -8,7 +9,7 @@
 <script>
     export default {
         name: "Message",
-      props: ['message']
+      props: ['message',"last"]
     }
 </script>
 
@@ -20,6 +21,7 @@
     padding-left: 1em ;
     padding-right: 1em;
     display: inline-block;
+    position:relative;
   }
 
 .incoming-message-item{
@@ -51,7 +53,16 @@
     .message-item-conatainer{
       padding-right: 0.2em;
       padding-left: 0.2em;
+
     }
   }
+
+  .message-receive-location{
+    color: gray;
+    float: left;
+    font-size: 0.7em;
+
+  }
+
 
 </style>
