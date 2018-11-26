@@ -28,23 +28,46 @@ export default class HttpService {
 
   bindMessages(toUserId, data) {
     let service = this;
+    var msgId = this.msgid(toUserId, this.userId);
     $.get({
       dataType: "json",
       cache: false,
-      url: "messages/" + this.msgid(toUserId, this.userId),
+      url: "messages/" + msgId,
       success: function (res) {
         if (!res.ok) {
           return;
         }
+        var offlineMessages = [];
+        var offlineMessagesStarter = res.messages.length - offlineMessagesCount;
         for (var i = 0; i < res.messages.length; i++) {
-          if(res.messages[i]){
+          if (res.messages[i]) {
             res.messages[i].receive = res.messages[i].sender != service.userId;
             data.push(res.messages[i]);
+            if (offlineMessagesStarter < i) {
+              offlineMessages.push(res.messages[i]);
+            }
           }
         }
+        service.saveToDb({
+          store: 'offlinemsgs_' + msgId,
+          data: {
+            messages: offlineMessages,
+            time: (new Date()).getTime()
+          }
+        });
+
       },
       error: function () {
-
+        console.log("Offline működés!");
+        service.loadFromDb({
+          error:function(){console.error("Cannot load offline data")},
+          success:function(offlineData){
+            for(var i = 0; i < offlineData.length ; i++){
+              data.push(offlineData[i]);
+            }
+          },
+          store:'offlinemsgs_' + msgId
+        })
       }
     });
   }
@@ -65,28 +88,18 @@ export default class HttpService {
       success: function () {
 
       },
-      error:function(){
-      /*
-        navigator.serviceWorker.controller.postMessage({
-          type:"unsentmessage",
-          data:{
-            msgId:service.msgid(toUserId, service.userId),
-            txt:txt,
-            sender:service.userId
-          }
-        });
-      */
+      error: function () {
         service.saveToDb({
-          store:'unSyncedMessages',
-          data:{
-            msgId:service.msgid(toUserId, service.userId),
-            txt:txt,
-            sender:service.userId,
+          store: 'unSyncedMessages',
+          data: {
+            msgId: service.msgid(toUserId, service.userId),
+            txt: txt,
+            sender: service.userId,
             time: (new Date()).getTime()
           }
         });
 
-        navigator.serviceWorker.ready.then(function(swRegistration) {
+        navigator.serviceWorker.ready.then(function (swRegistration) {
           return swRegistration.sync.register('syncMessages');
         });
       }
@@ -111,12 +124,12 @@ export default class HttpService {
         service.users = res;
         var currentUser = null;
         for (var key in res) {
-          if(key == service.userId){
+          if (key == service.userId) {
             currentUser = {
               id: key,
               name: res[key].user
             };
-          }else{
+          } else {
             data.push({
               id: key,
               name: res[key].user
@@ -124,21 +137,38 @@ export default class HttpService {
           }
 
         }
-        if(currentUser){
+        if (currentUser) {
           data.push(currentUser);
         }
+        service.saveToDb({
+          store: 'offlineusers',
+          data: {
+            messages: data,
+            time: (new Date()).getTime()
+          }
+        });
+      },
+      error:function(){
+        service.loadFromDb({
+          error:function(){console.error("Cannot load offline data")},
+          success:function(offlineData){
+            for(var i = 0; i < offlineData.length ; i++){
+              data.push(offlineData[i]);
+            }
+          },
+          store:'offlineusers'
+        });
       }
     });
   }
 
-  logIn(user, pass, success,failure) {
+  logIn(user, pass, success, failure) {
     var service = this;
+
     this.userName = user;
-
-
-    fetch("auth/login",{
-      method:"post",
-      body:JSON.stringify({
+    fetch("auth/login", {
+      method: "post",
+      body: JSON.stringify({
         user: user,
         pass: pass
       }),
@@ -146,17 +176,36 @@ export default class HttpService {
         'content-type': 'application/json'
       },
       cache: 'no-cache'
-    }).then(function(response) {
+    }).then(function (response) {
       return response.json();
-    }).then(function(res){
+    }).then(function (res) {
       service.userId = res.id;
       service.logged = true;
       success();
       service.pollServer();
       service.registerPush();
-    }).catch(function(error){
-      service.userName = null;
-      failure();
+      localStorage.setItem("salt", res.salt);
+      localStorage.setItem("userid", res.id);
+      localStorage.setItem("auth", md5(sha256.pbkdf2(pass, res.salt, 1000, 32)));
+    }).catch(function (error) {
+      if (navigator && !navigator.onLine && localStorage && localStorage.getItem("salt") && localStorage.getItem("auth") &&
+        md5(sha256.pbkdf2(pass, localStorage.getItem("salt"), 1000, 32)) == localStorage.getItem("auth")) {
+          service.userId =localStorage.getItem("userid");
+          service.logged = true;
+          success();
+          service.pollServer();
+          service.registerPush();
+
+        }else{
+        service.userName = null;
+        if(failure){
+          failure();
+        }else{
+          console.error("Offline load fail")
+        }
+
+      }
+
     });
   }
 
@@ -174,7 +223,7 @@ export default class HttpService {
       success: function () {
         service.logged = true;
         success();
-      },error:function(){
+      }, error: function () {
         service.userName = null;
       }
     });
@@ -207,43 +256,70 @@ export default class HttpService {
 
   pollServer() {
     var service = this;
-
-      window.setTimeout(function () {
-        $.ajax({
-          url: "messages/polling/" + service.userId,
-          method:"GET",
-          cache: false,
-          success: function (result) {
-            if(result && result.sender && result.txt){
-              if(result.sender != service.userId){
-                service.messageArrived(result);
-              }
+    var pending = 0;
+    if(navigator && !navigator.onLine){
+      pending = 1000;
+    }
+    window.setTimeout(function () {
+      $.ajax({
+        url: "messages/polling/" + service.userId,
+        method: "GET",
+        cache: false,
+        success: function (result) {
+          if (result && result.sender && result.txt) {
+            if (result.sender != service.userId) {
+              service.messageArrived(result);
             }
-            //SUCCESS LOGIC
-            service.pollServer();
-          },
-          error: function () {
-            //ERROR HANDLING
-            console.log("Errored");
-            service.pollServer();
           }
-        });
-      }, 0);
+          //SUCCESS LOGIC
+          service.pollServer();
+        },
+        error: function () {
+          //ERROR HANDLING
+          console.error("pollserver Errored");
+          service.pollServer();
+        }
+      });
+    }, pending);
 
   }
 
-  messageArrived(msg){
-    if(this.msgArrivedCallback){
+  messageArrived(msg) {
+    if (this.msgArrivedCallback) {
       this.msgArrivedCallback(msg);
     }
   }
-  subscribe(cb){
+
+  subscribe(cb) {
     this.msgArrivedCallback = cb;
   }
 
-  getUserName(){
-      return this.userName || "";
+  getUserName() {
+    return this.userName || "";
   }
+
+  loadFromDb(param) {
+    var request = window.indexedDB.open("db", window.DBVERSION);
+    request.onsuccess = function (event) {
+      var db = event.target.result;
+      var tx = db.transaction(param.store, 'readwrite');
+      var store = tx.objectStore(param.store);
+      var list = [];
+      store.openCursor().onsuccess = function (event) {
+        var cursor = event.target.result;
+        if (cursor) {
+          list.push(cursor.value);
+          cursor.continue();
+        } else {
+          param.success(list);
+        }
+      };
+    }
+    request.onerror = function () {
+      param.error();
+    }
+  }
+
 
   saveToDb(params){
     var request = window.indexedDB.open("db",window.DBVERSION);
@@ -260,7 +336,7 @@ export default class HttpService {
 
       objectStoreRequest.onerror = function(e){
         debugger;
-        console.log(e);
+        console.error(e);
       }
     }
   }
@@ -278,7 +354,6 @@ export default class HttpService {
       if(!window.registration){
         return;
       }
-
       console.log("registerpush");
       clearInterval(intervalId);
       const publicVapidKey = 'BExzC1HY_R6awc0BBYNLsVtJyWitteGMLqhA-f563Fs4yUWEP2JBRy4HSCiWciB1tPRRg9nKHdtxyGInOKPwqFw';
@@ -294,14 +369,22 @@ export default class HttpService {
           }
         });
       });
-
-
     },1000);
-
-
   }
 
+  showMsgNotification(msg){
+    var userName = this.getUserNameById(msg.sender);
+    var msgShort = msg.txt.length > 20 ? msg.txt.substr(0,17)+"..." : msg.txt;
+    var notificationJson = {
+      body:msgShort,
+      icon:'https://pwachat.ddns.net/static/img/icon192.png'
+    };
+    var title = userName+" üzenetet küldött!";
+    navigator.serviceWorker.ready.then(function (swRegistration) {
+      return swRegistration.showNotification(title,notificationJson);
+    });
+  }
 }
-
+var offlineMessagesCount = 10;
 //var dev = true;
 

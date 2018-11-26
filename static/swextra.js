@@ -16,8 +16,8 @@ self.addEventListener('push', ev => {
   const data = ev.data.json();
   console.log('Got push', data);
   self.registration.showNotification(data.title, {
-    body: "Üzenete érkezett",
-    icon: 'https://pwachat.ddns.net/static/img/icon192.png'
+    body: data.body,
+    icon: data.icon
   });
 });
 
@@ -30,12 +30,12 @@ function syncMessages() {
     var db = event.target.result;
     var tx = db.transaction("unSyncedMessages", 'readwrite');
     var store = tx.objectStore("unSyncedMessages");
-    var items = store.getAll().onsuccess = function (event) {
-      var dataarr = event.target.result;
+    store.getAll().onsuccess = function (event) {
+      var dataArray = event.target.result;
       setTimeout(function () {
 
-        for (var i = 0; i < dataarr.length; i++) {
-          var msg = dataarr[i];
+        for (var i = 0; i < dataArray.length; i++) {
+          var msg = dataArray[i];
           fetch("messages/" + msg.msgId, {
             mode: "cors",
             method: 'post',

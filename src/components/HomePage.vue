@@ -61,6 +61,8 @@
         if(msg.sender == this.currentUserId){
           msg.receive = 1;
           this.$refs.cw.msgArrived(msg);
+        }else{
+          service.showMsgNotification(msg);
         }
       },
       nearby(){
