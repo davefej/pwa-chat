@@ -70,7 +70,7 @@
     e.preventDefault();
     // Stash the event so it can be triggered later.
     deferredPrompt = e;
-    if(prompt("Add to homesceen?")){
+    if(confirm("Add to homesceen?")){
       homescreen();
     }
   });

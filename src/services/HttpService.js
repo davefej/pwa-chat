@@ -10,6 +10,7 @@ export default class HttpService {
     this.newMessages = [];
     this.msgArrivedCallback = null;
     this.locationStr = null;
+    this.recentMessages = {};
     this.updateLocation();
   }
 
@@ -50,25 +51,20 @@ export default class HttpService {
             }
           }
         }
-        service.saveToDb({
-          store: 'offlinemsgs_' + msgId,
-          data: {
-            messages: offlineMessages,
-            time: (new Date()).getTime()
-          }
-        });
-
+        service.recentMessages[msgId] = offlineMessages;
+        service.storeRecentMessages(offlineMessages,msgId);
       },
       error: function () {
         console.log("Offline működés!");
         service.loadFromDb({
           error:function(){console.error("Cannot load offline data")},
           success:function(offlineData){
-            for(var i = 0; i < offlineData.length ; i++){
-              data.push(offlineData[i]);
+            for(var i = 0; i < offlineData.messages.length ; i++){
+              data.push(offlineData.messages[i]);
             }
           },
-          store:'offlinemsgs_' + msgId
+          store:"recentMessages",
+          keyValue:msgId
         })
       }
     });
@@ -76,35 +72,34 @@ export default class HttpService {
 
   sendMessage(toUserId, txt) {
     let service = this;
+    var message = {
+      txt: txt,
+      sender: this.userId,
+      location:service.locationName(),
+      time:new Date().toISOString()
+    };
+    var msgId = this.msgid(toUserId, this.userId);
     $.post({
       dataType: "json",
       cache: false,
-      url: "messages/" + this.msgid(toUserId, this.userId),
+      url: "messages/" + msgId,
       contentType: 'application/json; charset=utf-8',
       data: JSON.stringify({
-        msg: {
-          txt: txt,
-          sender: this.userId,
-          location:service.locationName(),
-          time:new Date().toISOString()
-        }
+        msg: message
       }),
       success: function () {
-
+        var offlineMessages = service.recentMessages[msgId];
+        offlineMessages.shift();
+        offlineMessages.push(message);
+        service.storeRecentMessages(offlineMessages,msgId);
       },
       error: function () {
         service.saveToDb({
-          store: 'unSyncedMessages',
-          data: {
-            msgId: service.msgid(toUserId, service.userId),
-            txt: txt,
-            sender: service.userId,
-            time: (new Date()).getTime()
-          }
+          store: 'messagesToSend',
+          data: message
         });
-
         navigator.serviceWorker.ready.then(function (swRegistration) {
-          return swRegistration.sync.register('syncMessages');
+          return swRegistration.sync.register('unSentMessages');
         });
       }
     });
@@ -145,22 +140,26 @@ export default class HttpService {
           data.push(currentUser);
         }
         service.saveToDb({
-          store: 'offlineusers',
+          store: 'offlineUsers',
           data: {
-            messages: data,
+            id:1,
+            users: data,
             time: (new Date()).getTime()
-          }
+          },
+          update:1
         });
+
       },
       error:function(){
         service.loadFromDb({
           error:function(){console.error("Cannot load offline data")},
           success:function(offlineData){
-            for(var i = 0; i < offlineData.length ; i++){
-              data.push(offlineData[i]);
+            for(var i = 0; i < offlineData.users.length ; i++){
+              data.push(offlineData.users[i]);
             }
           },
-          store:'offlineusers'
+          store:'offlineUsers',
+          keyValue:1
         });
       }
     });
@@ -294,6 +293,10 @@ export default class HttpService {
     if (this.msgArrivedCallback) {
       this.msgArrivedCallback(msg);
     }
+    var offlineMessages = service.recentMessages[msg.sender];
+    offlineMessages.shift();
+    offlineMessages.push(msg);
+    this.storeRecentMessages(offlineMessages,msg.sender);
   }
 
   subscribe(cb) {
@@ -310,16 +313,25 @@ export default class HttpService {
       var db = event.target.result;
       var tx = db.transaction(param.store, 'readwrite');
       var store = tx.objectStore(param.store);
-      var list = [];
-      store.openCursor().onsuccess = function (event) {
-        var cursor = event.target.result;
-        if (cursor) {
-          list.push(cursor.value);
-          cursor.continue();
-        } else {
-          param.success(list);
-        }
-      };
+
+      if(param.keyValue){
+        var request = store.get(param.keyValue);
+        request.onsuccess = function(event) {
+          param.success(event.target.result);
+        };
+      }else{
+        var list = [];
+        store.openCursor().onsuccess = function (event) {
+          var cursor = event.target.result;
+          if (cursor) {
+            list.push(cursor.value);
+            cursor.continue();
+          } else {
+            param.success(list);
+          }
+        };
+      }
+
     }
     request.onerror = function () {
       param.error();
@@ -331,14 +343,13 @@ export default class HttpService {
     var request = window.indexedDB.open("db",window.DBVERSION);
     request.onsuccess = function(event){
       var db = event.target.result;
-      if (!db.objectStoreNames.contains(params.store)) {
-        db.createObjectStore(params.store);
-        return;
-      }
       var tx = db.transaction(params.store, 'readwrite');
       var store = tx.objectStore(params.store);
-      var objectStoreRequest = store.add(params.data);
-
+      if(params.update){
+        var objectStoreRequest = store.put(params.data);
+      }else{
+        var objectStoreRequest = store.add(params.data);
+      }
       objectStoreRequest.onsuccess = function(event) {
         console.log("Sikeres!")
       };
@@ -429,6 +440,17 @@ export default class HttpService {
     var title = userName+" üzenetet küldött!";
     navigator.serviceWorker.ready.then(function (swRegistration) {
       return swRegistration.showNotification(title,notificationJson);
+    });
+  }
+  storeRecentMessages(messages,msgId){
+    this.saveToDb({
+      store: 'recentMessages',
+      data: {
+        messageId:msgId,
+        messages: messages,
+        time: (new Date()).getTime()
+      },
+      update:1
     });
   }
 }

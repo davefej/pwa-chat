@@ -33,23 +33,27 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 
-window.DBVERSION = 10;
+window.DBVERSION = 2;
 if (!('indexedDB' in window)) {
   alert('This browser doesn\'t support IndexedDB');
 }else{
 
+
   var request = window.indexedDB.open("db",window.DBVERSION);
   request.onupgradeneeded = function(event) {
-
     var db = event.target.result;
-
-    if (!db.objectStoreNames.contains('unSyncedMessages')) {
-      db.createObjectStore('unSyncedMessages',{keyPath:"time"});
-    }else{
-      db.deleteObjectStore("unSyncedMessages");
-      db.createObjectStore('unSyncedMessages',{keyPath:"time"});
+    var objectStores = [
+      {name:"messagesToSend",details:{keyPath:"time"}},
+      {name:"recentMessages",details:{keyPath:"messageId"}},
+      {name:"offlineUsers",details:{keyPath:"id"}}
+    ];
+    for(var i = 0; i < objectStores.length; i++){
+      if (!db.objectStoreNames.contains(objectStores[i].name)) {
+        db.createObjectStore(objectStores[i].name,objectStores[i].details);
+      }
     }
   }
+
 
 }
 

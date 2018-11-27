@@ -7,7 +7,7 @@ self.onmessage = function (msg) {
 }
 
 self.addEventListener('sync', function(event) {
-  if (event.tag == 'syncMessages') {
+  if (event.tag == 'unSentMessages') {
     event.waitUntil(syncMessages());
   }
 });
@@ -21,15 +21,15 @@ self.addEventListener('push', ev => {
   });
 });
 
-var DBVERSION = 10;
+var DBVERSION = 2;
 
 function syncMessages() {
 
   var request = indexedDB.open("db", DBVERSION);
   request.onsuccess = function (event) {
     var db = event.target.result;
-    var tx = db.transaction("unSyncedMessages", 'readwrite');
-    var store = tx.objectStore("unSyncedMessages");
+    var tx = db.transaction("messagesToSend", 'readwrite');
+    var store = tx.objectStore("messagesToSend");
     store.getAll().onsuccess = function (event) {
       var dataArray = event.target.result;
       setTimeout(function () {
@@ -59,8 +59,8 @@ function syncMessages() {
         var request = indexedDB.open("db", DBVERSION);
         request.onsuccess = function (event) {
           var db = event.target.result;
-          var tx = db.transaction("unSyncedMessages", 'readwrite');
-          var store = tx.objectStore("unSyncedMessages");
+          var tx = db.transaction("messagesToSend", 'readwrite');
+          var store = tx.objectStore("messagesToSend");
           var objectStoreRequest = store.clear();
           objectStoreRequest.onsuccess = function (event) {
             console.log("Cleared!");
