@@ -1,7 +1,7 @@
 <template>
-<div class="message-item-conatainer">
+<div class="message-item-conatainer" v-on:click="showDetails()">
   <div v-if="message.receive" class="message-item incoming-message-item ">
-    <div class="incoming-msg">{{message.txt}}</div><div v-if="message.location" class="message-receive-location">{{message.location}}</div></div>
+    <div class="incoming-msg">{{message.txt}}</div><div v-if="message.location" ref="details" class="message-receive-location">{{message.location}} {{beautifyTime(message.time)}}</div></div>
   <div v-if="!message.receive" class="message-item outgoing-message-item">{{message.txt}}</div>
 </div>
 </template>
@@ -9,7 +9,32 @@
 <script>
     export default {
         name: "Message",
-      props: ['message',"last"]
+      props: ['message',"last"],
+      methods:{
+        showDetails() {
+          console.log("aa")
+          var node = this.$refs.details;
+          if(node){
+            node.style.display = "block";
+          }
+
+        },
+        beautifyTime(time){
+          if(!time){
+            return "";
+          }
+          var d = new Date(time);
+
+          if(this.isToday(d)){
+              return d.toLocaleTimeString();
+          }else{
+              return d.toLocaleString();
+          }
+        },
+        isToday(date){
+          return date.toDateString() == new Date().toDateString();
+        }
+      }
     }
 </script>
 
@@ -22,6 +47,7 @@
     padding-right: 1em;
     display: inline-block;
     position:relative;
+    cursor:pointer;
   }
 
 .incoming-message-item{
@@ -61,7 +87,7 @@
     color: gray;
     float: left;
     font-size: 0.7em;
-
+    display: none;
   }
 
 

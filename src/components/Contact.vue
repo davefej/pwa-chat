@@ -1,5 +1,5 @@
 <template>
-  <div class="contact-container waves-effect  " v-bind:class="{ currentUser: (currentUserId == id) }">
+  <div class="contact-container waves-effect  " v-bind:class="{ user_me: (myUserId == id), currentUser: current }">
     <img class="contact-image" src="../assets/user.png"/>
     <div class="contact-details">
       <div class="contact-name">{{name}}</div>
@@ -13,10 +13,10 @@
   let service = HttpService.instance();
     export default {
         name: "Contact",
-        props: ['name','id'],
+        props: ['name','id',"current"],
         data:function(){
           return {
-            currentUserId:service.userId
+            myUserId:service.userId
           }
         }
     }
@@ -28,6 +28,10 @@
   padding: 1em;
   display: flex;
   align-items: center;
+}
+
+.contact-container:hover{
+  background: #eeeeee;
 }
   .contact-image{
     height: 3em;
@@ -42,9 +46,14 @@
   flex-direction: column;
 
 }
+@media screen and (min-width: 728px){
+  .currentUser{
+    background:#dde9ff;
+  }
+}
 
-.currentUser{
-  background:#dde9ff;
+.user_me{
+  background:#dddddd;
 }
 
 .contact-name{

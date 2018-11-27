@@ -4,7 +4,7 @@
     <input class="form-control mr-sm-2 waves-effect" type="text"  v-model="searchFilter" placeholder="Search" aria-label="Search"/>
   </div>
     <div v-for="user in filteredUsers">
-      <Contact :name="user.name" :id="user.id" @click.native="userSelected(user.id)"/>
+      <Contact :name="user.name" :current="user.id==selectedUserId" :id="user.id" @click.native="userSelected(user.id)"/>
     </div>
   </div>
 </template>
@@ -20,6 +20,7 @@
     data: function () {
       return {
         searchFilter:"",
+        selectedUserId:false,
         users:[]//service.getUsers()
       }
     },
@@ -28,6 +29,7 @@
     },
     methods: {
         userSelected(id){
+          this.selectedUserId = id;
           this.$emit('userSelected',id);
         }
     },

@@ -16,9 +16,15 @@
       <div id="msginput" class="msg-input scrollbar scrollbar-primary" contenteditable="true" ref="txtinput" v-on:keyup="txtTyped"
            placeholder="Enter text here...">
       </div>
-      <button class=" msg-icons emojipicker">
-        😄😚
-      </button>
+
+      <div class="extra-features">
+        <button class=" msg-icons emojipicker">
+          😄
+        </button>
+        <div id="speech-rec" class="speech-recognition" v-on:click="speechToText()">
+
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -80,21 +86,66 @@
             }
 
           },200);
+        },
+      focusOnText(){
+       var el = $("#msginput").get()[0];
+        el.focus();
+        if (typeof window.getSelection != "undefined"
+          && typeof document.createRange != "undefined") {
+          var range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          var sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        } else if (typeof document.body.createTextRange != "undefined") {
+          var textRange = document.body.createTextRange();
+          textRange.moveToElementText(el);
+          textRange.collapse(false);
+          textRange.select();
         }
       },
+        speechToText(){
+            var txtinput = this.$refs.txtinput;
+            const recognition = new window.SpeechRecognition();
+            recognition.lang="hu";
+            $("#speech-rec").addClass("speech-recognition-active");
+            var module = this;
+            var removeClass = function(){
+              $("#speech-rec").removeClass("speech-recognition-active");
+              module.focusOnText();
+            }
+
+            recognition.onresult = (event) => {
+              const speechToText = event.results[0][0].transcript;
+              txtinput.textContent += " "+speechToText;
+              removeClass();
+            }
+            recognition.onerror = (event) => {
+              removeClass();
+            }
+            recognition.onnomatch = function(event) {
+              console.log("No match");
+              removeClass();
+            }
+            recognition.start();
+          }
+      },
      created: function () {
-
         this.scrolldown();
-
      },
     mounted:function(){
-      debugger;
       var txtinput = this.$refs.txtinput;
+      let module = this;
       $('.emojipicker').lsxEmojiPicker({
         twemoji: true,
         onSelect: function(emoji){
-          txtinput.textContent += String.fromCodePoint(emoji.value.replace("&#","0"));
+          var values = emoji.value.split(";");
+          for(var i = 0; i < values.length; i++){
+            txtinput.textContent += String.fromCodePoint(values[i].replace("&#","0"));
+          }
           console.log(emoji);
+          module.focusOnText();
         }
       });
     }
@@ -179,8 +230,28 @@
     background: transparent;
     border: none;
     width: 2em;
+    flex:1;
 
-    height: 3em;
     cursor: pointer;
+  }
+
+  .speech-recognition{
+    color:grey;
+    flex:1;
+    background: transparent;
+    border: none;
+    background-image:url('../assets/mic.gif');
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    cursor:pointer;
+  }
+
+  .speech-recognition-active{
+    background-image:url('../assets/mic-animate.gif');
+  }
+  .extra-features{
+    display:flex;
+    flex-direction: column;
   }
 </style>

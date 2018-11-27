@@ -85,7 +85,8 @@ export default class HttpService {
         msg: {
           txt: txt,
           sender: this.userId,
-          location:service.locationName()
+          location:service.locationName(),
+          time:new Date().toISOString()
         }
       }),
       success: function () {
@@ -330,12 +331,15 @@ export default class HttpService {
     var request = window.indexedDB.open("db",window.DBVERSION);
     request.onsuccess = function(event){
       var db = event.target.result;
+      if (!db.objectStoreNames.contains(params.store)) {
+        db.createObjectStore(params.store);
+        return;
+      }
       var tx = db.transaction(params.store, 'readwrite');
       var store = tx.objectStore(params.store);
       var objectStoreRequest = store.add(params.data);
 
       objectStoreRequest.onsuccess = function(event) {
-
         console.log("Sikeres!")
       };
 

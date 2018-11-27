@@ -4,7 +4,7 @@
   <div class="home-container">
 
     <div id="userswall" class="left-side scrollbar scrollbar-primary">
-      <users @userSelected="updateChatWall"/>
+      <users @userSelected="updateChatWall" />
     </div>
     <div id="chatwall" class="right-side">
       <chat-wall ref="cw" />

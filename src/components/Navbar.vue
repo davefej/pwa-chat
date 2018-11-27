@@ -7,7 +7,7 @@
 
     <a class="navbar-brand" href="#">PWA - CHAT</a>
     <a class="nav-item whitecolor" href="#">{{userName}}</a>
-    <div @click="nearby" class="nearbyimg"></div>
+    <!--<div @click="nearby" class="nearbyimg"></div>-->
   </nav>
 </template>
 

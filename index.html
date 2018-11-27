@@ -108,6 +108,9 @@
     return outputArray;
   }
 
+  window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+  window.SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
+  window.SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
 </script>
 
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDnxh_2ttAwFbfLkixCmO2kOZneuxEh9K4&callback=initMap"
