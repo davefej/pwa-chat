@@ -78,6 +78,10 @@ export default class HttpService {
       location:service.locationName(),
       time:new Date().toISOString()
     };
+    if(!toUserId || !this.userId){
+      console.error("sendMessage msgID error, [receiverId,SenderId] => ",toUserId,this.userId);
+      return;
+    }
     var msgId = this.msgid(toUserId, this.userId);
     $.post({
       dataType: "json",
@@ -89,11 +93,15 @@ export default class HttpService {
       }),
       success: function () {
         var offlineMessages = service.recentMessages[msgId];
-        offlineMessages.shift();
-        offlineMessages.push(message);
-        service.storeRecentMessages(offlineMessages,msgId);
+        if(offlineMessages && Array.isArray(offlineMessages)){
+          offlineMessages.shift();
+          offlineMessages.push(message);
+          service.storeRecentMessages(offlineMessages,msgId);
+        }
+
       },
       error: function () {
+        message.messageId = msgId;
         service.saveToDb({
           store: 'messagesToSend',
           data: message
@@ -289,14 +297,16 @@ export default class HttpService {
 
   }
 
-  messageArrived(msg) {
+  messageArrived(message) {
     if (this.msgArrivedCallback) {
-      this.msgArrivedCallback(msg);
+      this.msgArrivedCallback(message);
     }
-    var offlineMessages = service.recentMessages[msg.sender];
-    offlineMessages.shift();
-    offlineMessages.push(msg);
-    this.storeRecentMessages(offlineMessages,msg.sender);
+    var offlineMessages = this.recentMessages[message.sender];
+    if(offlineMessages && Array.isArray(offlineMessages)){
+      offlineMessages.shift();
+      offlineMessages.push(message);
+      this.storeRecentMessages(offlineMessages,message.sender);
+    }
   }
 
   subscribe(cb) {
@@ -432,10 +442,15 @@ export default class HttpService {
   }
   showMsgNotification(msg){
     var userName = this.getUserNameById(msg.sender);
+    var msgId = this.msgid(msg.sender,this.userId);
     var msgShort = msg.txt.length > 20 ? msg.txt.substr(0,17)+"..." : msg.txt;
     var notificationJson = {
       body:msgShort,
-      icon:'https://pwachat.ddns.net/static/img/icon192.png'
+      icon:'https://pwachat.ddns.net/static/img/icon192.png',
+      tag:"messageArrived",
+      data:{
+        messageId:msgId
+      }
     };
     var title = userName+" üzenetet küldött!";
     navigator.serviceWorker.ready.then(function (swRegistration) {
