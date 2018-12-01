@@ -47,7 +47,7 @@
     padding-right: 1em;
     display: inline-block;
     position:relative;
-    cursor:pointer;
+
   }
 
 .incoming-message-item{
@@ -69,6 +69,7 @@
     max-width: 57%;
     word-wrap: break-word;
     white-space: pre-wrap;
+    cursor:pointer;
   }
   @media screen and (max-width: 728px){
     .message-item{

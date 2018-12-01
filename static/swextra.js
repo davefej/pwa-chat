@@ -30,7 +30,7 @@ self.addEventListener('notificationclick', function(event) {
   );
 });
 
-var DBVERSION = 2;
+var DBVERSION = 1;
 
 function syncMessages() {
 
@@ -49,50 +49,6 @@ function syncMessages() {
         clearUnSentMessages();
       }
     };
-
-
-    /*store.getAll().onsuccess = function (event) {
-      var dataArray = event.target.result;
-      setTimeout(function () {
-
-        for (var i = 0; i < dataArray.length; i++) {
-          var msg = dataArray[i];
-          var messageId = msg.messageId;
-          delete msg.messageId;
-          fetch("messages/" + messageId, {
-            mode: "cors",
-            method: 'post',
-            headers: {
-              'Content-type': 'application/json; charset=utf-8'
-            },
-            body: JSON.stringify({
-              msg: msg
-            })
-          }).then(function (response) {
-            return response;
-          }).then(function (text) {
-            console.log('unsentMessage Resend succesfull', text);
-          }).catch(function (error) {
-            console.error('unsentMessage Resend failed', error);
-          });
-        }
-        var request = indexedDB.open("db", DBVERSION);
-        request.onsuccess = function (event) {
-          var db = event.target.result;
-          var tx = db.transaction("messagesToSend", 'readwrite');
-          var store = tx.objectStore("messagesToSend");
-          var objectStoreRequest = store.clear();
-          objectStoreRequest.onsuccess = function (event) {
-            console.log("MessagesToSend Cleared!");
-          };
-        }
-
-      }, 500);
-
-
-    }*/
-
-  }
   request.onerror = function (err) {
     console.err(err);
   }

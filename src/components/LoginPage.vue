@@ -71,7 +71,7 @@
 
 
       <div class="text-center mt-4">
-        <button class="btn btn-primary waves-effect waves-light" @click="signup">Login</button>
+        <button class="btn btn-primary waves-effect waves-light" @click="signup">Sign Up</button>
       </div>
 
     </div>

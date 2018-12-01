@@ -1,21 +1,21 @@
 export default class HttpService {
 
-  constructor(param) {
-    this.instance = null;
-    if (!param) {
-      throw Error("Illegal Constructor call!");
+  constructor() {
+    if(HttpService.inst){
+      throw Error("HttpService use singleton pattern, acces via HttpService.instance() !");
     }
     this.data = {};
-    this.data.users = [];
-    this.newMessages = [];
     this.msgArrivedCallback = null;
     this.locationStr = null;
     this.recentMessages = {};
     this.updateLocation();
   }
 
-  getUsers() {
-    return this.data.users;
+  static instance() {
+    if (!HttpService.inst) {
+      HttpService.inst = new HttpService();
+    }
+    return HttpService.inst;
   }
 
   getMessages(userId) {
@@ -121,6 +121,151 @@ export default class HttpService {
     }
   }
 
+  messageArrived(message) {
+    if (this.msgArrivedCallback) {
+      this.msgArrivedCallback(message);
+    }
+    var offlineMessages = this.recentMessages[message.sender];
+    if(offlineMessages && Array.isArray(offlineMessages)){
+      offlineMessages.shift();
+      offlineMessages.push(message);
+      this.storeRecentMessages(offlineMessages,message.sender);
+    }
+  }
+
+  subscribeForMessages(cb) {
+    this.msgArrivedCallback = cb;
+  }
+
+  storeRecentMessages(messages,msgId){
+    this.saveToDb({
+      store: 'recentMessages',
+      data: {
+        messageId:msgId,
+        messages: messages,
+        time: (new Date()).getTime()
+      },
+      update:1
+    });
+  }
+
+  pollServer() {
+    var service = this;
+    var pending = 0;
+    if(navigator && !navigator.onLine){
+      pending = 1000;
+    }
+    window.setTimeout(function () {
+      $.ajax({
+        url: "messages/polling/" + service.userId,
+        method: "GET",
+        cache: false,
+        success: function (result) {
+          if (result && result.sender && result.txt) {
+            if (result.sender != service.userId) {
+              service.messageArrived(result);
+            }
+          }
+          //SUCCESS LOGIC
+          service.pollServer();
+        },
+        error: function () {
+          //ERROR HANDLING
+          console.error("pollserver Errored");
+          service.pollServer();
+        }
+      });
+    }, pending);
+
+  }
+
+  logIn(user, pass, success, failure) {
+    var service = this;
+
+    this.userName = user;
+    fetch("auth/login", {
+      method: "post",
+      body: JSON.stringify({
+        user: user,
+        pass: pass
+      }),
+      headers: {
+        'content-type': 'application/json'
+      },
+      cache: 'no-cache'
+    }).then(function (response) {
+      return response.json();
+    }).then(function (res) {
+      service.userId = res.id;
+      service.logged = true;
+      success();
+      service.pollServer();
+      service.registerPush();
+      service.requestNotificationPermission();
+      localStorage.setItem("salt", res.salt);
+      localStorage.setItem("userid", res.id);
+      localStorage.setItem("auth", md5(sha256.pbkdf2(pass, res.salt, 1000, 32)));
+    }).catch(function (error) {
+      if (navigator && !navigator.onLine && localStorage && localStorage.getItem("salt") && localStorage.getItem("auth") &&
+        md5(sha256.pbkdf2(pass, localStorage.getItem("salt"), 1000, 32)) == localStorage.getItem("auth")) {
+          service.userId =localStorage.getItem("userid");
+          service.logged = true;
+          success();
+          service.requestNotificationPermission();
+          service.pollServer();
+          service.registerPush();
+
+        }else{
+        service.userName = null;
+        if(failure){
+          failure();
+        }else{
+          console.error("Offline load fail")
+        }
+
+      }
+
+    });
+  }
+
+  signUp(user, pass, success, error) {
+    this.userName = user;
+    var service = this;
+    $.post({
+      dataType: "json",
+      url: "auth/register",
+      data: {
+        user: user,
+        pass: pass
+      },
+      success: function () {
+        service.logged = true;
+        success();
+      }, error: function (e) {
+        service.userName = null;
+        error(e);
+      }
+    });
+
+  }
+
+  logOut() {
+    this.logged = false;
+  }
+
+  loggedIn() {
+    if (typeof dev != "undefined" && dev) {
+      return true;
+    }
+    return this.logged;
+  }
+
+  getUserNameById(id) {
+    if (this.users && this.users[id]) {
+      return this.users[id].user;
+    }
+  }
+
   bindUsers(data) {
     var service = this;
     $.get({
@@ -173,146 +318,6 @@ export default class HttpService {
     });
   }
 
-  logIn(user, pass, success, failure) {
-    var service = this;
-
-    this.userName = user;
-    fetch("auth/login", {
-      method: "post",
-      body: JSON.stringify({
-        user: user,
-        pass: pass
-      }),
-      headers: {
-        'content-type': 'application/json'
-      },
-      cache: 'no-cache'
-    }).then(function (response) {
-      return response.json();
-    }).then(function (res) {
-      service.userId = res.id;
-      service.logged = true;
-      success();
-      service.pollServer();
-      service.registerPush();
-      service.requestNotificationPermission();
-      localStorage.setItem("salt", res.salt);
-      localStorage.setItem("userid", res.id);
-      localStorage.setItem("auth", md5(sha256.pbkdf2(pass, res.salt, 1000, 32)));
-    }).catch(function (error) {
-      if (navigator && !navigator.onLine && localStorage && localStorage.getItem("salt") && localStorage.getItem("auth") &&
-        md5(sha256.pbkdf2(pass, localStorage.getItem("salt"), 1000, 32)) == localStorage.getItem("auth")) {
-          service.userId =localStorage.getItem("userid");
-          service.logged = true;
-          success();
-          service.requestNotificationPermission();
-          service.pollServer();
-          service.registerPush();
-
-        }else{
-        service.userName = null;
-        if(failure){
-          failure();
-        }else{
-          console.error("Offline load fail")
-        }
-
-      }
-
-    });
-  }
-
-
-  signUp(user, pass, success) {
-    this.userName = user;
-    var service = this;
-    $.post({
-      dataType: "json",
-      url: "auth/register",
-      data: {
-        user: user,
-        pass: pass
-      },
-      success: function () {
-        service.logged = true;
-        success();
-      }, error: function () {
-        service.userName = null;
-      }
-    });
-
-  }
-
-  logOut() {
-    this.logged = false;
-  }
-
-  loggedIn() {
-    if (typeof dev != "undefined" && dev) {
-      return true;
-    }
-    return this.logged;
-  }
-
-  static instance() {
-    if (!HttpService.inst) {
-      HttpService.inst = new HttpService(true);
-    }
-    return HttpService.inst;
-  }
-
-  getUserNameById(id) {
-    if (this.users && this.users[id]) {
-      return this.users[id].user;
-    }
-  }
-
-  pollServer() {
-    var service = this;
-    var pending = 0;
-    if(navigator && !navigator.onLine){
-      pending = 1000;
-    }
-    window.setTimeout(function () {
-      $.ajax({
-        url: "messages/polling/" + service.userId,
-        method: "GET",
-        cache: false,
-        success: function (result) {
-          if (result && result.sender && result.txt) {
-            if (result.sender != service.userId) {
-              service.messageArrived(result);
-            }
-          }
-          //SUCCESS LOGIC
-          service.pollServer();
-        },
-        error: function () {
-          //ERROR HANDLING
-          console.error("pollserver Errored");
-          service.pollServer();
-        }
-      });
-    }, pending);
-
-  }
-
-  messageArrived(message) {
-    if (this.msgArrivedCallback) {
-      this.msgArrivedCallback(message);
-    }
-    var offlineMessages = this.recentMessages[message.sender];
-    if(offlineMessages && Array.isArray(offlineMessages)){
-      offlineMessages.shift();
-      offlineMessages.push(message);
-      this.storeRecentMessages(offlineMessages,message.sender);
-    }
-  }
-
-  subscribe(cb) {
-    this.msgArrivedCallback = cb;
-  }
-
   getUserName() {
     return this.userName || "";
   }
@@ -348,7 +353,6 @@ export default class HttpService {
     }
   }
 
-
   saveToDb(params){
     var request = window.indexedDB.open("db",window.DBVERSION);
     request.onsuccess = function(event){
@@ -361,7 +365,7 @@ export default class HttpService {
         var objectStoreRequest = store.add(params.data);
       }
       objectStoreRequest.onsuccess = function(event) {
-        console.log("Sikeres!")
+        console.log("Sikeres adat mentés!")
       };
 
       objectStoreRequest.onerror = function(e){
@@ -370,6 +374,7 @@ export default class HttpService {
       }
     }
   }
+
   myLocation(locationCallback){
     if (navigator.geolocation) {
        navigator.geolocation.getCurrentPosition(locationCallback);
@@ -378,9 +383,11 @@ export default class HttpService {
     }
 
   }
+
   locationName(){
      return this.locationStr;
   }
+
   updateLocation(){
     var service = this;
     if(!this.locationTimer && navigator.geolocation){
@@ -410,6 +417,7 @@ export default class HttpService {
     }
 
   }
+
   registerPush(){
     var service = this;
     var intervalId = setInterval(function(){
@@ -433,6 +441,7 @@ export default class HttpService {
       });
     },1000);
   }
+
   requestNotificationPermission(){
     if (Notification.permission != 'granted') {
       Notification.requestPermission(function(status) {
@@ -440,6 +449,7 @@ export default class HttpService {
       });
     }
   }
+
   showMsgNotification(msg){
     var userName = this.getUserNameById(msg.sender);
     var msgId = this.msgid(msg.sender,this.userId);
@@ -457,18 +467,8 @@ export default class HttpService {
       return swRegistration.showNotification(title,notificationJson);
     });
   }
-  storeRecentMessages(messages,msgId){
-    this.saveToDb({
-      store: 'recentMessages',
-      data: {
-        messageId:msgId,
-        messages: messages,
-        time: (new Date()).getTime()
-      },
-      update:1
-    });
-  }
+
 }
+HttpService.instance();
 var offlineMessagesCount = 10;
-//var dev = true;
 

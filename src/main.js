@@ -33,12 +33,10 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 
 
-window.DBVERSION = 2;
+window.DBVERSION = 1;
 if (!('indexedDB' in window)) {
   alert('This browser doesn\'t support IndexedDB');
 }else{
-
-
   var request = window.indexedDB.open("db",window.DBVERSION);
   request.onupgradeneeded = function(event) {
     var db = event.target.result;
@@ -49,14 +47,8 @@ if (!('indexedDB' in window)) {
     ];
     for(var i = 0; i < objectStores.length; i++){
       if (!db.objectStoreNames.contains(objectStores[i].name)) {
-        db.createObjectStore(objectStores[i].name,objectStores[i].details);
+        db.createObjectStore(objectStores[i].name, objectStores[i].details);
       }
     }
   }
-
-
 }
-
-
-
-

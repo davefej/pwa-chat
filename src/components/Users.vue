@@ -21,7 +21,7 @@
       return {
         searchFilter:"",
         selectedUserId:false,
-        users:[]//service.getUsers()
+        users:[]
       }
     },
     mounted:function(){

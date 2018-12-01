@@ -2,7 +2,6 @@
 <div class="onepage">
   <navbar @back="backClicked" ref="navbar" />
   <div class="home-container">
-
     <div id="userswall" class="left-side scrollbar scrollbar-primary">
       <users @userSelected="updateChatWall" />
     </div>
@@ -74,7 +73,7 @@
         this.$router.push("login");
       }
 
-      service.subscribe(this.msgArrived);
+      service.subscribeForMessages(this.msgArrived);
     },
     mounted:function(){
       this.$refs.navbar.setUser(service.getUserName());

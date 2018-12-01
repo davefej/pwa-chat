@@ -20,6 +20,13 @@
 
   </head>
   <body>
+    <div id="add_to_home" style="display:none;">
+      Hozzáadja a kezdőképernyőhöz?
+      <div class="btn-container">
+        <button onclick="homeInstall(true)">Igen</button> <button onclick="homeInstall(false)">Nem</button>
+      </div>
+
+    </div>
     <div id="app"></div>
     <!-- built files will be auto injected -->
     <!-- SCRIPTS -->
@@ -42,23 +49,34 @@
     <script src="https://twemoji.maxcdn.com/2/twemoji.min.js"></script>
     <script src="static/emoji/jquery.lsxemojipicker.js"></script>
 
+  <style>
+    #add_to_home{
+      position: absolute;
+      width: 300px;
+      top: 0px;
+      text-align: center;
+      padding: 0.3em;
+      margin: auto;
+      background: white;
+      left: 3em;
+      box-shadow: rgba(0, 0, 0, 0.18) 0px 5px 11px 0px, rgba(0, 0, 0, 0.15) 0px 4px 15px 0px;
+      z-index: 3;
+    }
 
+  </style>
 
   </body>
 
 <script>
 
 
-  if ('serviceWorker' in navigator) {
+  if (navigator && 'serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-
       navigator.serviceWorker.register('sw.js').then(function(registration) {
-        // Registration was successful
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
         window.registration = registration;
       }, function(err) {
-        // registration failed :(
-        console.log('ServiceWorker registration failed: ', err);
+        console.error('ServiceWorker registration failed: ', err);
       });
     });
   }
@@ -71,9 +89,17 @@
     // Stash the event so it can be triggered later.
     deferredPrompt = e;
     if(confirm("Add to homesceen?")){
-      homescreen();
+
+      $("#add_to_home").show("blind");
     }
   });
+
+  function homeInstall(bool){
+    $("#add_to_home").hide();
+    if(bool){
+      homescreen();
+    }
+  }
 
   function homescreen(){
     deferredPrompt.prompt();
