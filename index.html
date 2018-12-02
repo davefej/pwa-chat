@@ -21,9 +21,10 @@
   </head>
   <body>
     <div id="add_to_home" style="display:none;">
-      Hozzáadja a kezdőképernyőhöz?
+      Add to home screen?
       <div class="btn-container">
-        <button onclick="homeInstall(true)">Igen</button> <button onclick="homeInstall(false)">Nem</button>
+        <button onclick="homeInstall(true)" class="btn btn-sm btn-primary">Yes</button>
+        <button onclick="homeInstall(false)" class="btn btn-sm btn-danger">No</button>
       </div>
 
     </div>
@@ -88,10 +89,7 @@
     e.preventDefault();
     // Stash the event so it can be triggered later.
     deferredPrompt = e;
-    if(confirm("Add to homesceen?")){
-
-      $("#add_to_home").show("blind");
-    }
+    $("#add_to_home").show("blind");
   });
 
   function homeInstall(bool){

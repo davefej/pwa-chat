@@ -214,7 +214,6 @@ export default class HttpService {
           service.requestNotificationPermission();
           service.pollServer();
           service.registerPush();
-
         }else{
         service.userName = null;
         if(failure){
@@ -381,7 +380,6 @@ export default class HttpService {
     }else{
         locationCallback(false);
     }
-
   }
 
   locationName(){

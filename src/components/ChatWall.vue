@@ -117,8 +117,8 @@
             }
 
             recognition.onresult = (event) => {
-              const speechToText = event.results[0][0].transcript;
-              txtinput.textContent += " "+speechToText;
+              const spokenTexz = event.results[0][0].transcript;
+              txtinput.textContent += " " + spokenTexz;
               removeClass();
             }
             recognition.onerror = (event) => {

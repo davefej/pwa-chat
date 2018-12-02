@@ -45,12 +45,13 @@ function syncMessages() {
         sendMessage(cursor.value);
         cursor.continue();
       } else {
-       /*finished*/
+        /*finished*/
         clearUnSentMessages();
       }
     };
-  request.onerror = function (err) {
-    console.err(err);
+    request.onerror = function (err) {
+      console.err(err);
+    }
   }
 }
 

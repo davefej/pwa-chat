@@ -115,9 +115,7 @@
         }
 
         var back = this.back;
-        console.log("Login credentials");
         navigator.credentials.get({password:true}).then(function(credential) {
-          console.log("Login credentials 2");
           if(!credential){
             $("#login").show();
             $(".autologin-container").hide();
